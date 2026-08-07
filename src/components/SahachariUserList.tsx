@@ -1,0 +1,290 @@
+import React, { useEffect, useState, useMemo } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Boxes,
+  Package,
+  Plus,
+  AlertCircle,
+  EllipsisVertical,
+  Pencil,
+  Trash2,
+  Users,
+  Search,
+  RotateCcw,
+} from "lucide-react";
+import { useSahachariUsers, type SahachariUser } from "../store/useSahachariUsers";
+import { useAuthStore } from "../store/useAuthStore";
+import { checkPermission } from "../utils/checkPermission";
+import { SahachariUserModal } from "./SahachariUserModal";
+
+export const SahachariUserList: React.FC = () => {
+  const { users, isLoading, error, fetchUsers, deleteUser, clearError } =
+    useSahachariUsers();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openMenu, setOpenMenu] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<SahachariUser | null>(null);
+
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!checkPermission(user, ["sahachari handle", "all handle"], navigate)) return;
+    fetchUsers({ page: 1, limit: 10 });
+  }, [user, navigate]);
+
+  // Client-side instant filter: Updates as you type without backend API requests
+  const filteredUsers = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return users;
+    return users.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(query) ||
+        u.identification_name?.toLowerCase().includes(query) ||
+        u.address?.toLowerCase().includes(query)
+    );
+  }, [users, searchTerm]);
+
+  // Backend query: Called only when Search button is clicked or Enter key pressed
+  const handleSearch = () => {
+    fetchUsers({ page: 1, limit: 10, search: searchTerm || undefined });
+  };
+
+  const handleReset = () => {
+    setSearchTerm("");
+    fetchUsers({ page: 1, limit: 10 });
+  };
+
+  const handleDelete = async (r_id: number) => {
+    if (!(await checkPermission(user, ["sahachari handle", "all handle"], navigate))) return;
+    if (window.confirm("Are you sure you want to delete this Sahachari user?")) {
+      await deleteUser({
+        r_id,
+        action_by: user!.id,
+      });
+      setOpenMenu(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 transition-colors dark:bg-slate-950 sm:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* Navigation Tabs Header */}
+        <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+              Sahachari User Directory
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Manage registered beneficiaries, members, and personal identification details.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <NavLink
+              to="/sahachari"
+              end
+              className={({ isActive }) =>
+                `inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                  isActive
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                }`
+              }
+            >
+              <Boxes size={16} />
+              Issues Log
+            </NavLink>
+
+            <NavLink
+              to="/sahachari/items"
+              className={({ isActive }) =>
+                `inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                  isActive
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                }`
+              }
+            >
+              <Package size={16} />
+              Items
+            </NavLink>
+
+            <NavLink
+              to="/sahachari/users"
+              className={({ isActive }) =>
+                `inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                  isActive
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                }`
+              }
+            >
+              <Users size={16} />
+              Members / Users
+            </NavLink>
+          </div>
+        </div>
+
+        {/* Action Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            Registered Members
+          </h2>
+          <button
+            onClick={() => {
+              setEditingUser(null);
+              setModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-md transition hover:bg-indigo-700 active:scale-95"
+          >
+            <Plus size={16} />
+            Add User
+          </button>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={18} />
+              <span>{error}</span>
+            </div>
+            <button
+              onClick={clearError}
+              className="rounded-lg bg-rose-600 px-3 py-1 text-xs font-semibold text-white"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
+        {/* Search Bar */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1">
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              />
+              <input
+                type="text"
+                placeholder="Search member by name, phone, or ID code..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-10 pr-4 text-xs text-slate-900 placeholder-slate-400 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-indigo-500 dark:focus:bg-slate-900 dark:focus:ring-indigo-500/20"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleReset}
+                className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <RotateCcw size={16} />
+              </button>
+              <button
+                onClick={handleSearch}
+                className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+              >
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Table View */}
+        <div className="overflow-visible rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+            <thead className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+              <tr>
+                <th className="px-6 py-4">#</th>
+                <th className="px-6 py-4">Name</th>
+                <th className="px-6 py-4">ID / Identity</th>
+                <th className="px-6 py-4">Address / Details</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-xs text-slate-400">
+                    Loading users...
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-xs text-slate-400">
+                    No users found.
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((u, i) => (
+                  <tr
+                    key={u.id}
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                  >
+                    <td className="px-6 py-4 text-xs font-mono text-slate-400">{i + 1}</td>
+                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-100">
+                      {u.name}
+                    </td>
+                    <td className="px-6 py-4 font-mono font-medium text-indigo-600 dark:text-indigo-400">
+                      {u.identification_name || "—"}
+                    </td>
+
+                    <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">
+                      {u.address || "—"}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="relative inline-block">
+                        <button
+                          onClick={() =>
+                            setOpenMenu(openMenu === u.id ? null : u.id)
+                          }
+                          className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        >
+                          <EllipsisVertical size={16} />
+                        </button>
+                        {openMenu === u.id && (
+                          <div className="absolute right-0 z-20 mt-1 w-32 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                            <button
+                              onClick={() => {
+                                setEditingUser(u);
+                                setModalOpen(true);
+                                setOpenMenu(null);
+                              }}
+                              className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+                            >
+                              <Pencil size={13} className="text-amber-500" /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(u.id)}
+                              className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50"
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {user && (
+        <SahachariUserModal
+          open={modalOpen}
+          editingUser={editingUser}
+          onClose={() => setModalOpen(false)}
+          actionBy={user.id}
+        />
+      )}
+    </div>
+  );
+};
