@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import axios, { AxiosError } from 'axios';
-import { baseurl } from './api';
+import {  createUserUrl, deleteUserUrl, loginUserUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -73,7 +73,7 @@ export const useAuthStore = create<AuthState>()(
       loginUser: async (credentials) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.post(`${baseurl}/user/login`, credentials);
+          const response = await axios.post(loginUserUrl, credentials);
           const { token, user } = response.data;
           set({
             user,
@@ -99,7 +99,7 @@ export const useAuthStore = create<AuthState>()(
       registerUser: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          await axios.post('${baseurl}/user/create', data);
+          await axios.post(createUserUrl, data);
           set({ isLoading: false });
           return true;
         } catch (err: any) {
@@ -125,7 +125,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { token } = get();
           await axios.post(
-            '${baseurl}/user/delete',
+            deleteUserUrl,
             { r_id, active_year_id, action_by },
             {
               headers: { Authorization: `Bearer ${token}` },

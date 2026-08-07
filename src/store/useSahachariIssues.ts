@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import axios from "axios"; // Replace with your configured API instance (e.g., import api from '@/config/axios')
-import { baseurl } from "./api";
+import {  createSahachariIssueUrl, getSahachariIssueUrl, returnSahachariIssueUrl } from "./api";
 
 // ----------------------------------------------------------------------
 // Types
@@ -114,7 +114,7 @@ export const useSahachariIssues = create<SahachariStore>((set, get) => ({
     };
 
     try {
-      const response = await axios.post(`${baseurl}/sahachari/issues/get`, requestBody);
+      const response = await axios.post(getSahachariIssueUrl, requestBody);
       const { issues, pagination: respPagination } = response.data;
 
       set({
@@ -134,7 +134,7 @@ export const useSahachariIssues = create<SahachariStore>((set, get) => ({
   createIssue: async (payload: CreateSahachariPayload) => {
     set({ loading: true, error: null });
     try {
-      await axios.post(`${baseurl}/sahachari/issues/create`, payload);
+      await axios.post(createSahachariIssueUrl, payload);
       // Automatically refresh issue list upon successful creation
       await get().fetchIssues();
       return true;
@@ -151,7 +151,7 @@ export const useSahachariIssues = create<SahachariStore>((set, get) => ({
   returnIssue: async (payload: ReturnSahachariPayload) => {
     set({ loading: true, error: null });
     try {
-      await axios.post(`${baseurl}/sahachari/issues/return`, payload);
+      await axios.post(returnSahachariIssueUrl, payload);
       // Automatically refresh issue list upon successful return
       await get().fetchIssues();
       return true;

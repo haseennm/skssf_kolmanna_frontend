@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import {
   Boxes,
@@ -6,7 +5,6 @@ import {
   Calendar,
   Package,
   Users,
-  TrendingUp,
   ArrowUpRight,
   Clock,
   LogIn,
@@ -144,9 +142,13 @@ export default function Home() {
                 <Clock size={14} />
                 {currentDate}
               </div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-                Welcome back, {user?.name || "Member"} 👋
-              </h1>
+              {user ?
+                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+                  Welcome back, {user?.name} 👋
+                </h1>
+                : <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+                  Welcome! Sign in to get started 👋
+                </h1>}
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 SKSSF Kolmanna Unit Management Dashboard
               </p>
@@ -155,42 +157,42 @@ export default function Home() {
             <div className="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/50 sm:items-end">
               <span className="text-xs font-medium text-slate-400">Assigned Handles</span>
               <div className="flex flex-wrap gap-1.5">
-              {user ? (
-    <>
-      <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                {user ? (
+                  <>
+                    {/* <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
         Assigned Handles
-      </span>
-      <div className="flex flex-wrap gap-1.5 sm:justify-end">
-        {user.role && user.role.length > 0 ? (
-          user.role.map((role) => renderRoleBadge(role))
-        ) : (
-          <span className="text-xs font-medium text-slate-400">No active handle</span>
-        )}
-      </div>
-    </>
-  ) : (
-    <div className="flex flex-col items-start gap-2.5 sm:items-end">
-      {/* Session Status Tag */}
-      <div className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
-        <ShieldAlert size={13} />
-        <span>Guest Visitor</span>
-      </div>
+      </span> */}
+                    <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                      {user.role && user.role.length > 0 ? (
+                        user.role.map((role) => renderRoleBadge(role))
+                      ) : (
+                        <span className="text-xs font-medium text-slate-400">No active handle</span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-start gap-2.5 sm:items-end">
+                    {/* Session Status Tag */}
+                    <div className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      <ShieldAlert size={13} />
+                      <span>Guest Visitor</span>
+                    </div>
 
-      {/* Explanatory Text */}
-      <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-right">
-        Sign in to unlock unit handles & manage records.
-      </p>
+                    {/* Explanatory Text */}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-right">
+                      Sign in to unlock unit handles & manage records.
+                    </p>
 
-      {/* Redirect Button */}
-      <Link
-        to="/login"
-        className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500 active:scale-95"
-      >
-        <LogIn size={14} />
-        <span>Login to Account</span>
-      </Link>
-    </div>
-  )}
+                    {/* Redirect Button */}
+                    <Link
+                      to="/login"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500 active:scale-95"
+                    >
+                      <LogIn size={14} />
+                      <span>Login to Account</span>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>

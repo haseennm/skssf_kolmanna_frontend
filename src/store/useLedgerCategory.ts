@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import { createLedgerCategoryUrl, deleteLedgerCategoryUrl, editLedgerCategoryUrl, getLedgerCategoryUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -71,7 +71,7 @@ export const useLedgerCategory = create<LedgerCategoryState>((set) => ({
   fetchCategories: async (filters = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/payment/category/get`, {
+      const response = await axios.post(getLedgerCategoryUrl, {
         page: filters.page ?? 1,
         limit: filters.limit ?? 10,
         ...filters,
@@ -94,7 +94,7 @@ export const useLedgerCategory = create<LedgerCategoryState>((set) => ({
   createCategory: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/payment/category/create`, data);
+      const response = await axios.post(createLedgerCategoryUrl, data);
       const newCategory: LedgerCategory = response.data.message;
 
       set((state) => ({
@@ -115,7 +115,7 @@ export const useLedgerCategory = create<LedgerCategoryState>((set) => ({
   editCategory: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/payment/category/edit`, data);
+      const response = await axios.post(editLedgerCategoryUrl, data);
       const updatedCategory: LedgerCategory =
         response.data.message?.data || response.data.message;
 
@@ -139,7 +139,7 @@ export const useLedgerCategory = create<LedgerCategoryState>((set) => ({
   deleteCategory: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${baseurl}/payment/category/delete`, data);
+      await axios.post(deleteLedgerCategoryUrl, data);
 
       set((state) => ({
         categories: state.categories.filter(

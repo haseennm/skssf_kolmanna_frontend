@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import { createActiveYearUrl, deleteActiveYearUrl, editActiveYearUrl, endActiveYearUrl, fetchActiveYearUrl, startActiveYearUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -88,7 +88,7 @@ export const useActiveYearStore = create<ActiveYearState>((set) => ({
   fetchActiveYears: async (filters = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/active/year/get`, {
+      const response = await axios.post(fetchActiveYearUrl, {
         page: filters.page ?? 1,
         limit: filters.limit ?? 10,
         ...filters,
@@ -112,7 +112,7 @@ export const useActiveYearStore = create<ActiveYearState>((set) => ({
   createActiveYear: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/active/year/create`, data);
+      const response = await axios.post(createActiveYearUrl, data);
       const newActiveYear: ActiveYear = response.data.message;
 
       set((state) => ({
@@ -149,7 +149,7 @@ export const useActiveYearStore = create<ActiveYearState>((set) => ({
   editActiveYear: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/active/year/edit`, data);
+      const response = await axios.post(editActiveYearUrl, data);
       const updatedActiveYear: ActiveYear =
         response.data.message?.data || response.data.message;
 
@@ -173,7 +173,7 @@ export const useActiveYearStore = create<ActiveYearState>((set) => ({
   deleteActiveYear: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${baseurl}/active/year/delete`, data);
+      await axios.post(deleteActiveYearUrl, data);
 
       set((state) => ({
         activeYears: state.activeYears.filter((item) => item.id !== data.r_id),
@@ -193,7 +193,7 @@ export const useActiveYearStore = create<ActiveYearState>((set) => ({
   startActiveYear: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/active/year/start/year`, data);
+      const response = await axios.post(startActiveYearUrl, data);
       const updatedRecord: ActiveYear =
         response.data.message?.data || response.data.message;
 
@@ -217,7 +217,7 @@ export const useActiveYearStore = create<ActiveYearState>((set) => ({
   endActiveYear: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/active/year/end/year`, data);
+      const response = await axios.post(endActiveYearUrl, data);
       const updatedRecord: ActiveYear =
         response.data.message?.data || response.data.message;
 

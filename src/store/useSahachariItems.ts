@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import {  createSahachariItemsUrl, deleteSahachariItemsUrl, editSahachariItemsUrl, getSahachariItemsUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -82,7 +82,7 @@ export const useSahachariItems = create<SahachariItemState>((set) => ({
   fetchItems: async (filters = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/sahachari/item/get`, {
+      const response = await axios.post(getSahachariItemsUrl, {
         page: filters.page ?? 1,
         limit: filters.limit ?? 10,
         ...filters,
@@ -106,7 +106,7 @@ export const useSahachariItems = create<SahachariItemState>((set) => ({
   createItem: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/sahachari/item/create`, data);
+      const response = await axios.post(createSahachariItemsUrl, data);
       
       const newItems: SahachariItem[] = Array.isArray(response.data.message)
         ? response.data.message
@@ -130,7 +130,7 @@ export const useSahachariItems = create<SahachariItemState>((set) => ({
   editItem: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/sahachari/item/edit`, data);
+      const response = await axios.post(editSahachariItemsUrl, data);
       const updatedItem: SahachariItem =
         response.data.message?.data || response.data.message;
 
@@ -154,7 +154,7 @@ export const useSahachariItems = create<SahachariItemState>((set) => ({
   deleteItem: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${baseurl}/sahachari/item/delete`, data);
+      await axios.post(deleteSahachariItemsUrl, data);
 
       set((state) => ({
         items: state.items.filter((item) => item.id !== data.r_id),

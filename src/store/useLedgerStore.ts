@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import {  createLedgerPaymentUrl, deleteLedgerPaymentUrl, editLedgerPaymentUrl, getLedgerPaymentUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -116,7 +116,7 @@ export const useLedgerStore = create<LedgerState>((set, _) => ({
     fetchLedgers: async (filters = {}) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.post(`${baseurl}/payment/ledger/get`, {
+            const response = await axios.post(getLedgerPaymentUrl, {
                 page: filters.page ?? 1,
                 limit: filters.limit ?? 10,
                 ...filters,
@@ -140,7 +140,7 @@ export const useLedgerStore = create<LedgerState>((set, _) => ({
     createLedger: async (data) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.post(`${baseurl}/payment/ledger/create`, data);
+            const response = await axios.post(createLedgerPaymentUrl, data);
             const newLedger = response.data.message;
 
             // Add new record to local list
@@ -162,7 +162,7 @@ export const useLedgerStore = create<LedgerState>((set, _) => ({
     editLedger: async (data) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.post(`${baseurl}/payment/ledger/edit`, data);
+            const response = await axios.post(editLedgerPaymentUrl, data);
             const updatedLedger = response.data.message.data;
 
             // Update record in local state
@@ -186,7 +186,7 @@ export const useLedgerStore = create<LedgerState>((set, _) => ({
     deleteLedger: async (data) => {
         set({ isLoading: true, error: null });
         try {
-            await axios.post(`${baseurl}/payment/ledger/delete`, data);
+            await axios.post(deleteLedgerPaymentUrl, data);
 
             // Remove deleted record from local state
             set((state) => ({

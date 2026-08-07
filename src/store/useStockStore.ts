@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import { createStockUrl, deleteStockUrl, editStockUrl, getStockUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -82,7 +82,7 @@ export const useStockStore = create<StockState>((set) => ({
     fetchStocks: async (filters = {}) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.post(`${baseurl}/stock/get`, {
+            const response = await axios.post(getStockUrl, {
                 page: filters.page ?? 1,
                 limit: filters.limit ?? 10,
                 ...filters,
@@ -106,7 +106,7 @@ export const useStockStore = create<StockState>((set) => ({
     createStock: async (data) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.post(`${baseurl}/stock/create`, data);
+            const response = await axios.post(createStockUrl, data);
             const newStock: Stock = response.data.message;
 
             set((state) => ({
@@ -127,7 +127,7 @@ export const useStockStore = create<StockState>((set) => ({
     editStock: async (data) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.post(`${baseurl}/stock/edit`, data);
+            const response = await axios.post(editStockUrl, data);
             const updatedStock: Stock =
                 response.data.message?.data || response.data.message;
 
@@ -151,7 +151,7 @@ export const useStockStore = create<StockState>((set) => ({
     deleteStock: async (data) => {
         set({ isLoading: true, error: null });
         try {
-            await axios.post(`${baseurl}/stock/delete`, data);
+            await axios.post(deleteStockUrl, data);
 
             set((state) => ({
                 stocks: state.stocks.filter((item) => item.id !== data.r_id),

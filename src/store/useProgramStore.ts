@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import {createProgramUrl, deleteProgramUrl, editProgramUrl, getProgramUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -82,7 +82,7 @@ export const useProgramStore = create<ProgramState>((set) => ({
   fetchPrograms: async (filters = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/program/get`, {
+      const response = await axios.post(getProgramUrl, {
         page: filters.page ?? 1,
         limit: filters.limit ?? 10,
         ...filters,
@@ -105,7 +105,7 @@ export const useProgramStore = create<ProgramState>((set) => ({
   createProgram: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/program/create`, data);
+      const response = await axios.post(createProgramUrl, data);
       const newProgram: Program = response.data.message;
 
       set((state) => ({
@@ -126,7 +126,7 @@ export const useProgramStore = create<ProgramState>((set) => ({
   editProgram: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/program/edit`, data);
+      const response = await axios.post(editProgramUrl, data);
       const updatedProgram: Program =
         response.data.message?.data || response.data.message;
 
@@ -150,7 +150,7 @@ export const useProgramStore = create<ProgramState>((set) => ({
   deleteProgram: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${baseurl}/program/delete`, data);
+      await axios.post(deleteProgramUrl, data);
 
       set((state) => ({
         programs: state.programs.filter((item) => item.id !== data.r_id),

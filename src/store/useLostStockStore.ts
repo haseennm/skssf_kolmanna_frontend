@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import {  createLowStockUrl, deleteLowStockUrl, editLowStockUrl, getLowStockUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -82,7 +82,7 @@ export const useLostStockStore = create<LostStockState>((set) => ({
   fetchLostStocks: async (filters = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/lost/stock/get`, {
+      const response = await axios.post(getLowStockUrl, {
         page: filters.page ?? 1,
         limit: filters.limit ?? 10,
         ...filters,
@@ -105,7 +105,7 @@ export const useLostStockStore = create<LostStockState>((set) => ({
   createLostStock: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/lost/stock/create`, data);
+      const response = await axios.post(createLowStockUrl, data);
       const newRecord: LostStock = response.data.message;
 
       set((state) => ({
@@ -126,7 +126,7 @@ export const useLostStockStore = create<LostStockState>((set) => ({
   editLostStock: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/lost/stock/edit`, data);
+      const response = await axios.post(editLowStockUrl, data);
       const updatedRecord: LostStock =
         response.data.message?.data || response.data.message;
 
@@ -150,7 +150,7 @@ export const useLostStockStore = create<LostStockState>((set) => ({
   deleteLostStock: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${baseurl}/lost/stock/delete`, data);
+      await axios.post(deleteLowStockUrl, data);
 
       set((state) => ({
         lostStocks: state.lostStocks.filter((item) => item.id !== data.r_id),

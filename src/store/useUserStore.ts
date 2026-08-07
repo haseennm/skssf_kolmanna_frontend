@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import { baseurl, createUserUrl, deleteUserUrl, editUserUrl, getUserUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -115,7 +115,7 @@ export const useuserStore = create<UserState>((set) => ({
   fetchUsers: async (filters) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/user/get`, {
+      const response = await axios.post(getUserUrl, {
         page: filters.page ?? 1,
         limit: filters.limit ?? 10,
         ...filters,
@@ -139,7 +139,7 @@ export const useuserStore = create<UserState>((set) => ({
   createUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/user/create`, data);
+      const response = await axios.post(createUserUrl, data);
       const newUser: User = response.data.message;
 
       set((state) => ({
@@ -160,7 +160,7 @@ export const useuserStore = create<UserState>((set) => ({
   editUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/user/edit`, data);
+      const response = await axios.post(editUserUrl, data);
       const updatedUser: User =
         response.data.message?.data || response.data.message;
 
@@ -184,7 +184,7 @@ export const useuserStore = create<UserState>((set) => ({
   deleteUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${baseurl}/user/delete`, data);
+      await axios.post(deleteUserUrl, data);
 
       set((state) => ({
         users: state.users.filter((item) => item.id !== data.r_id),

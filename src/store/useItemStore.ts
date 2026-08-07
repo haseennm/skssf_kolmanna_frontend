@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import { createStockItemUrl, deleteStockItemUrl, editStockItemUrl, getStockItemUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -80,7 +80,7 @@ export const useItemStore = create<ItemState>((set) => ({
   fetchItems: async (filters = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/item/get`, {
+      const response = await axios.post(getStockItemUrl, {
         page: filters.page ?? 1,
         limit: filters.limit ?? 10,
         ...filters,
@@ -104,7 +104,7 @@ export const useItemStore = create<ItemState>((set) => ({
   createItem: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/item/create`, data);
+      const response = await axios.post(createStockItemUrl, data);
       const newItem: Item = response.data.message;
 
       set((state) => ({
@@ -125,7 +125,7 @@ export const useItemStore = create<ItemState>((set) => ({
   editItem: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/item/edit`, data);
+      const response = await axios.post(editStockItemUrl, data);
       const updatedItem: Item =
         response.data.message?.data || response.data.message;
 
@@ -149,7 +149,7 @@ export const useItemStore = create<ItemState>((set) => ({
   deleteItem: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${baseurl}/item/delete`, data);
+      await axios.post(deleteStockItemUrl, data);
 
       set((state) => ({
         items: state.items.filter((item) => item.id !== data.r_id),

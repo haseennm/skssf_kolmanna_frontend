@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl } from './api';
+import { createSahachariUsersUrl, deleteSahachariUsersUrl, editSahachariUsersUrl, getSahachariUsersUrl } from './api';
 
 // ----------------------------------------------------------------------
 // Types
@@ -76,7 +76,7 @@ export const useSahachariUsers = create<SahachariUserState>((set) => ({
   fetchUsers: async (filters = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/sahachari/user/get`, {
+      const response = await axios.post(getSahachariUsersUrl, {
         page: filters.page ?? 1,
         limit: filters.limit ?? 10,
         ...filters,
@@ -100,7 +100,7 @@ export const useSahachariUsers = create<SahachariUserState>((set) => ({
   createUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/sahachari/user/create`, data);
+      const response = await axios.post(createSahachariUsersUrl, data);
       const newUser: SahachariUser = response.data.message;
 
       set((state) => ({
@@ -121,7 +121,7 @@ export const useSahachariUsers = create<SahachariUserState>((set) => ({
   editUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/sahachari/user/edit`, data);
+      const response = await axios.post(editSahachariUsersUrl, data);
       const updatedUser: SahachariUser =
         response.data.message?.data || response.data.message;
 
@@ -145,7 +145,7 @@ export const useSahachariUsers = create<SahachariUserState>((set) => ({
   deleteUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${baseurl}/sahachari/user/delete`, data);
+      await axios.post(deleteSahachariUsersUrl, data);
 
       set((state) => ({
         users: state.users.filter((user) => user.id !== data.r_id),
