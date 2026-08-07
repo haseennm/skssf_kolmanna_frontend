@@ -20,7 +20,6 @@ import {
 } from "../store/useActiveYearStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { ActiveYearFormModal } from "./ActiveYearModel";
-import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { checkPermission } from "../utils/checkPermission";
 

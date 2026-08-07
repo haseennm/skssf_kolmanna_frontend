@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { X, Save, AlertCircle } from "lucide-react";
 import { useItemStore, type Item } from "../store/useItemStore";
 import { useAuthStore } from "../store/useAuthStore";
-import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { checkPermission } from "../utils/checkPermission";
 

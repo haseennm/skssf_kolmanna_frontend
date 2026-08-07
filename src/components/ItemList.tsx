@@ -13,7 +13,6 @@ import {
 import { useItemStore, type Item } from "../store/useItemStore";
 import { ItemModal } from "./ItemModal";
 import { useAuthStore } from "../store/useAuthStore";
-import Swal from "sweetalert2";
 import { checkPermission } from "../utils/checkPermission";
 
 export const ItemList: React.FC = () => {
