@@ -3,7 +3,6 @@ import AuthLayout from "../layouts/AuthLayout";
 import Login from "../pages/Login";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../pages/Home";
-import Dashboard from "../pages/Dashboard";
 import NotFound from "../pages/NotFound";
 import Ledger from "../pages/LedgerPage";
 import LedgerCategoryList from "../pages/LedgerCategoryList";
@@ -30,7 +29,6 @@ export default function AppRouter() {
       {/* Protected */}
       <Route element={<MainLayout />}>
         <Route index element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/ledger" element={<Ledger />} />
         <Route path="/ledger/category" element={<LedgerCategoryList />} />
         <Route path="/stock" element={<StockListPage />} />

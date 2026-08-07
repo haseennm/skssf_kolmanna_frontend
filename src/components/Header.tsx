@@ -68,12 +68,19 @@ export default function Header() {
       <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
 
         {/* Logo */}
-        <NavLink
-          to="/"
-          className="text-xl font-bold tracking-wide text-primary-600 no-underline"
-        >
-          SKSSF <span className="text-secondary-500">Kolmanna</span>
-        </NavLink>
+      <NavLink
+  to="/"
+  className="flex items-center gap-2 text-xl font-bold tracking-wide no-underline"
+>
+  <img
+    src="/logo.webp"
+    alt="SKSSF Kolmanna"
+    className="h-10 w-10 object-contain"
+  />
+
+  <span className="text-primary-600">SKSSF</span>
+  <span className="text-secondary-500">Kolmanna</span>
+</NavLink>
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <button onClick={toggleTheme} className="text-sm font-medium transition-colors no-underline text-neutral-300 hover:text-secondary-300">

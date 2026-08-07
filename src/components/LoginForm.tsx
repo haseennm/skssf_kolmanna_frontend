@@ -45,7 +45,7 @@ export const LoginForm: React.FC = () => {
     const success = await loginUser(data);
 
     if (success) {
-      navigate("/dashboard", { replace: true });
+      navigate("/", { replace: true });
     }
   };
 
