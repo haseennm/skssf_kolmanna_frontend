@@ -1,4 +1,5 @@
-export const baseurl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5555/api";
+export const baseurl = "http://localhost:5555/api";
+// export const baseurl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5555/api";
 
 export const createActiveYearUrl=`${baseurl}/active/year/create`
 export const fetchActiveYearUrl=`${baseurl}/active/year/get`
@@ -13,6 +14,10 @@ export const createUserUrl=`${baseurl}/user/create`
 export const editUserUrl=`${baseurl}/user/edit`
 export const getUserUrl=`${baseurl}/user/get`
 export const deleteUserUrl=`${baseurl}/user/delete`
+export const movetoCurrentYearUrl=`${baseurl}/user/move/current/commitee`
+export const updatePasswordUrl=`${baseurl}/user/change-password/verify-user`
+export const requestUpdatePasswordUrl=`${baseurl}/user/change-password`
+export const verifyOtpUrl=`${baseurl}/user/otp/verify`
 
 
 export const createStockItemUrl=`${baseurl}/item/create`
@@ -57,13 +62,15 @@ export const getSahachariUsersUrl=`${baseurl}/sahachari/user/get`
 export const deleteSahachariUsersUrl=`${baseurl}/sahachari/user/delete`
 
 
-export const createSahachariIssueUrl=`${baseurl}}/sahachari/issues/create`
-export const getSahachariIssueUrl=`${baseurl}}/sahachari/issues/get`
-export const returnSahachariIssueUrl=`${baseurl}}/sahachari/issues/return`
+export const createSahachariIssueUrl=`${baseurl}/sahachari/issues/create`
+export const getSahachariIssueUrl=`${baseurl}/sahachari/issues/get`
+export const returnSahachariIssueUrl=`${baseurl}/sahachari/issues/return`
 
 
 export const createStockUrl=`${baseurl}/stock/create`
 export const editStockUrl=`${baseurl}/stock/edit`
 export const getStockUrl=`${baseurl}/stock/get`
 export const deleteStockUrl=`${baseurl}/stock/delete`
+
+
 

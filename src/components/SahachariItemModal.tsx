@@ -33,10 +33,6 @@ export const SahachariItemModal: React.FC<SahachariItemModalProps> = ({
     const { user } = useAuthStore();
 
     useEffect(() => {
-        if (!checkPermission(user, ["sahachari handle", "all handle"], navigate)) return;
-    }, [user, navigate]);
-
-    useEffect(() => {
         if (editingItem) {
             setName(editingItem.name || "");
             setItemCode(editingItem.item_code || "");

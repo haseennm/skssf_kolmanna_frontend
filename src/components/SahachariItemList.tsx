@@ -26,9 +26,8 @@ export const SahachariItemList: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!checkPermission(user, ["sahachari handle", "all handle"], navigate)) return;
-        fetchItems({ page: 1, limit: 10 });
-    }, [user, navigate]);
+        fetchItems({ page: 1, limit: 50 });
+    }, []);
 
     const handleDelete = async (r_id: number) => {
         if (!(await checkPermission(user, ["sahachari handle", "all handle"], navigate))) return;

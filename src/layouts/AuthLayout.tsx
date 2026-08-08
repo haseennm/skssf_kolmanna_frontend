@@ -1,9 +1,13 @@
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuthStore } from "../store/useAuthStore";
 
 export default function AuthLayout() {
-  return (
-    <main className="min-h-screen bg-last-50 dark:bg-teritory-900 flex items-center justify-center p-6">
-      <Outlet />
-    </main>
-  );
+  const { user } = useAuthStore();
+
+  // Already logged in
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
 }

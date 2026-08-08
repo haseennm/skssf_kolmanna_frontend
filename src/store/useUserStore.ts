@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { baseurl, createUserUrl, deleteUserUrl, editUserUrl, getUserUrl } from './api';
+import { baseurl, createUserUrl, deleteUserUrl, editUserUrl, getUserUrl, movetoCurrentYearUrl, requestUpdatePasswordUrl, updatePasswordUrl } from './api';
+import { useAuthStore } from './useAuthStore';
 
 // ----------------------------------------------------------------------
 // Types
@@ -38,7 +39,7 @@ export interface FetchUserFilters {
   id?: number;
   active_year_id?: number;
   search?: string | null;
-  action_by: string | number
+  action_by: string | number;
 }
 
 export interface CreateUserPayload {
@@ -54,7 +55,7 @@ export interface CreateUserPayload {
 }
 
 export interface EditUserPayload {
-  id: number;
+  id: number | string;
   active_year_id: number;
   name?: string;
   address?: string | null;
@@ -64,6 +65,7 @@ export interface EditUserPayload {
   password?: string;
   action_by: string | number;
   role?: UserRole[];
+  self_edit?: boolean;
 }
 
 export interface DeleteUserPayload {
@@ -83,6 +85,15 @@ export interface MoveToCurrentCommitteePayload {
   action_by: number;
 }
 
+export interface ChangePasswordPayload {
+  email: string;
+  password: string;
+}
+
+export interface VerifyUserForPasswordPayload {
+  email: string;
+}
+
 interface UserState {
   // State
   users: User[];
@@ -98,6 +109,8 @@ interface UserState {
   deleteUser: (data: DeleteUserPayload) => Promise<boolean>;
   loginUser: (data: LoginPayload) => Promise<boolean>;
   moveToCurrentCommittee: (data: MoveToCurrentCommitteePayload) => Promise<boolean>;
+  changePassword: (data: ChangePasswordPayload) => Promise<boolean>;
+  verifyUserForPassword: (data: VerifyUserForPasswordPayload) => Promise<boolean>;
   clearError: () => void;
 }
 
@@ -111,7 +124,6 @@ export const useuserStore = create<UserState>((set) => ({
   isLoading: false,
   error: null,
 
-  // Fetch Paginated Users
   fetchUsers: async (filters) => {
     set({ isLoading: true, error: null });
     try {
@@ -135,7 +147,6 @@ export const useuserStore = create<UserState>((set) => ({
     }
   },
 
-  // Create User
   createUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
@@ -156,31 +167,37 @@ export const useuserStore = create<UserState>((set) => ({
     }
   },
 
-  // Edit User
   editUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(editUserUrl, data);
+      
       const updatedUser: User =
         response.data.message?.data || response.data.message;
 
       set((state) => ({
-        users: state.users.map((item) =>
-          item.id === updatedUser.id ? updatedUser : item
-        ),
+        users: state.users
+          ? state.users.map((item) =>
+              item.id === updatedUser.id ? updatedUser : item
+            )
+          : state.users,
+        currentUser: data?.self_edit ? updatedUser : state.currentUser,
         isLoading: false,
       }));
+
+      if (data?.self_edit && updatedUser) {
+        useAuthStore.getState().setUser(updatedUser as any);
+      }
 
       return true;
     } catch (err: any) {
       const errorMessage =
-        err.response?.data?.message || 'Failed to edit user.';
+        err.response?.data?.message || "Failed to edit user.";
       set({ error: errorMessage, isLoading: false });
       return false;
     }
   },
 
-  // Delete User
   deleteUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
@@ -200,7 +217,6 @@ export const useuserStore = create<UserState>((set) => ({
     }
   },
 
-  // Login User
   loginUser: async (data) => {
     set({ isLoading: true, error: null });
     try {
@@ -220,11 +236,10 @@ export const useuserStore = create<UserState>((set) => ({
     }
   },
 
-  // Move User to Current Active Committee
   moveToCurrentCommittee: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${baseurl}/user/move/current/commitee`, data);
+      const response = await axios.post(movetoCurrentYearUrl, data);
       const updatedUser: User =
         response.data.message?.data || response.data.message || response.data.user;
 
@@ -248,6 +263,35 @@ export const useuserStore = create<UserState>((set) => ({
     }
   },
 
-  // Clear Error State
+  // Change Password Action
+  changePassword: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(requestUpdatePasswordUrl, data);
+      set({ isLoading: false });
+      return true;
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || 'Failed to change password.';
+      set({ error: errorMessage, isLoading: false });
+      return false;
+    }
+  },
+
+  // Verify User For Password Reset Action
+  verifyUserForPassword: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(updatePasswordUrl, data);
+      set({ isLoading: false });
+      return true;
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.error?.message || 'Failed to verify user details.';
+      set({ error: errorMessage, isLoading: false });
+      return false;
+    }
+  },
+
   clearError: () => set({ error: null }),
 }));

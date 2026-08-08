@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "../store/useAuthStore";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const loginSchema = z.object({
   username: z
@@ -226,7 +226,14 @@ export const LoginForm: React.FC = () => {
             </p>
           )}
         </div>
-
+        <div className="text-right">
+          <NavLink
+            to="/forgot/password"
+            className="text-sm font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+          >
+            Forgot password?
+          </NavLink>
+        </div>
         {/* Button */}
         <button
           type="submit"
