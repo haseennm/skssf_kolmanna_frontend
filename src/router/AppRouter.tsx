@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
 import Login from "../pages/Login";
 import MainLayout from "../layouts/MainLayout";
@@ -19,201 +19,63 @@ import ProfilePage from "../pages/Profile";
 import ForgotPasswordScreen from "../pages/ForgotPasswordScreen";
 import ProtectedRoute from "../layouts/ProtectedRoute";
 
-
-
 export default function AppRouter() {
   return (
     <Routes>
-
-      {/* =====================================================
-          PUBLIC / NON-LOGGED-IN ROUTES
-      ====================================================== */}
-
+      {/* 1. AUTH ROUTES (NO HEADER) */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
-
-        <Route
-          path="/forgot/password"
-          element={<ForgotPasswordScreen />}
-        />
+        <Route path="/forgot/password" element={<ForgotPasswordScreen />} />
       </Route>
 
-
-      {/* =====================================================
-          SAHACHARI ITEMS
-          Accessible WITHOUT login
-      ====================================================== */}
-
+      {/* 2. MAIN LAYOUT ROUTES (SHOWS HEADER FOR ALL USERS) */}
       <Route element={<MainLayout />}>
-        <Route
-          path="/sahachari/items"
-          element={<SahachariItems />}
-        />
-      </Route>
+        {/* Public Pages */}
+        <Route path="/" element={<Home />} />
+        <Route path="/sahachari/items" element={<SahachariItems />} />
 
+        {/* Protected Pages */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<ProfilePage />} />
 
-      {/* =====================================================
-          PROTECTED ROUTES
-          User MUST be logged in
-      ====================================================== */}
-
-      <Route element={<ProtectedRoute />}>
-        <Route element={<MainLayout />}>
-
-          {/* -------------------------------------------------
-              LOGGED-IN USERS
-          -------------------------------------------------- */}
-
-          <Route index element={<Home />} />
-
-          <Route
-            path="/profile"
-            element={<ProfilePage />}
-          />
-
-
-          {/* -------------------------------------------------
-              LEDGER HANDLE
-              + all handle
-          -------------------------------------------------- */}
-
-          <Route
-            element={
-              <ProtectedRoute roles={["ledger handle"]} />
-            }
-          >
-            <Route
-              path="/ledger"
-              element={<Ledger />}
-            />
-
-            <Route
-              path="/ledger/category"
-              element={<LedgerCategoryList />}
-            />
+          {/* LEDGER */}
+          <Route element={<ProtectedRoute roles={["ledger handle"]} />}>
+            <Route path="/ledger" element={<Ledger />} />
+            <Route path="/ledger/category" element={<LedgerCategoryList />} />
           </Route>
 
-
-          {/* -------------------------------------------------
-              STOCK HANDLE
-              + all handle
-          -------------------------------------------------- */}
-
-          <Route
-            element={
-              <ProtectedRoute roles={["stock handle"]} />
-            }
-          >
-            <Route
-              path="/stock"
-              element={<StockListPage />}
-            />
-
-            <Route
-              path="/stock/items"
-              element={<ItemsPage />}
-            />
-
-            <Route
-              path="/stock/lost"
-              element={<LostStockPage />}
-            />
+          {/* STOCK */}
+          <Route element={<ProtectedRoute roles={["stock handle"]} />}>
+            <Route path="/stock" element={<StockListPage />} />
+            <Route path="/stock/items" element={<ItemsPage />} />
+            <Route path="/stock/lost" element={<LostStockPage />} />
           </Route>
 
-
-          {/* -------------------------------------------------
-              PROGRAM HANDLE
-              + all handle
-          -------------------------------------------------- */}
-
-          <Route
-            element={
-              <ProtectedRoute roles={["program handle"]} />
-            }
-          >
-            <Route
-              path="/program"
-              element={<Program />}
-            />
+          {/* PROGRAM */}
+          <Route element={<ProtectedRoute roles={["program handle"]} />}>
+            <Route path="/program" element={<Program />} />
           </Route>
 
-
-          {/* -------------------------------------------------
-              USER HANDLE
-              + all handle
-          -------------------------------------------------- */}
-
-          <Route
-            element={
-              <ProtectedRoute roles={["user handle"]} />
-            }
-          >
-            <Route
-              path="/user"
-              element={<UserList />}
-            />
+          {/* USER */}
+          <Route element={<ProtectedRoute roles={["user handle"]} />}>
+            <Route path="/user" element={<UserList />} />
           </Route>
 
-
-          {/* -------------------------------------------------
-              ALL HANDLE ONLY
-          -------------------------------------------------- */}
-
-          <Route
-            element={
-              <ProtectedRoute roles={["all handle"]} />
-            }
-          >
-            <Route
-              path="/active/year"
-              element={<ActiveYearList />}
-            />
+          {/* ALL HANDLE */}
+          <Route element={<ProtectedRoute roles={["all handle"]} />}>
+            <Route path="/active/year" element={<ActiveYearList />} />
           </Route>
 
-
-          {/* -------------------------------------------------
-              SAHACHARI HANDLE
-              + all handle
-          -------------------------------------------------- */}
-
-          <Route
-            element={
-              <ProtectedRoute roles={["sahachari handle"]} />
-            }
-          >
-            <Route
-              path="/sahachari"
-              element={<Sahachari />}
-            />
-
-            <Route
-              path="/sahachari/users"
-              element={<SahachariUsers />}
-            />
+          {/* SAHACHARI */}
+          <Route element={<ProtectedRoute roles={["sahachari handle"]} />}>
+            <Route path="/sahachari" element={<Sahachari />} />
+            <Route path="/sahachari/users" element={<SahachariUsers />} />
           </Route>
-
         </Route>
+
+        {/* Catch-all 404 Page (with Header) */}
+        <Route path="*" element={<NotFound />} />
       </Route>
-
-
-      {/* =====================================================
-          DEFAULT
-      ====================================================== */}
-
-      <Route
-        path="/"
-        element={<Navigate to="/login" replace />}
-      />
-
-      {/* =====================================================
-          404
-      ====================================================== */}
-
-      <Route
-        path="*"
-        element={<NotFound />}
-      />
-
     </Routes>
   );
 }

@@ -1,54 +1,65 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { HeartHandshake, LogOut, Menu, Moon, Sun, User, X } from "lucide-react";
+import { useAuthStore } from "../store/useAuthStore";
+import { useThemeStore } from "../store/themeStore";
 import {
-  HeartHandshake,
-  LogOut,
-  Menu,
-  Moon,
-  Sun,
-  User,
-  X,
   Boxes,
   BookOpenText,
   CalendarDays,
   FolderKanban,
-  LogIn,
 } from "lucide-react";
-import { useAuthStore } from "../store/useAuthStore";
-import { useThemeStore } from "../store/themeStore";
 
-const publicNavItems = [
+const navItems = [
   {
     name: "Sahachari",
     path: "/sahachari/items",
     icon: HeartHandshake,
   },
-];
-
-const protectedNavItems = [
-  { name: "User", path: "/user", icon: User },
-  { name: "Stock", path: "/stock", icon: Boxes },
-  { name: "Ledger", path: "/ledger", icon: BookOpenText },
-  { name: "Program", path: "/program", icon: FolderKanban },
-  { name: "Active Year", path: "/active/year", icon: CalendarDays },
-  { name: "Profile", path: "/profile", icon: User },
+  {
+    name: "User",
+    path: "/user",
+    icon: User,
+  },
+  {
+    name: "Stock",
+    path: "/stock",
+    icon: Boxes,
+  },
+  {
+    name: "Ledger",
+    path: "/ledger",
+    icon: BookOpenText,
+  },
+  {
+    name: "Program",
+    path: "/program",
+    icon: FolderKanban,
+  },
+  {
+    name: "Active Year",
+    path: "/active/year",
+    icon: CalendarDays,
+  },
+  {
+    name: "Profile",
+    path: "/profile",
+    icon: User,
+  },
 ];
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, logoutUser } = useAuthStore();
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const location = useLocation();
   const { isDark, toggleTheme } = useThemeStore();
-
-  const navItems = isAuthenticated
-    ? [...publicNavItems, ...protectedNavItems]
-    : publicNavItems;
-
+  // Close mobile menu on route change
   useEffect(() => {
     setIsOpen(false);
   }, [location]);
 
+  // Close mobile menu on Escape key press (typed e as KeyboardEvent)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false);
@@ -58,109 +69,145 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur transition-colors dark:border-slate-800 dark:bg-slate-950/90">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky  top-0 z-50 border-b border-neutral-800 bg-neutral-950/95 backdrop-blur">
+      <div className="mx-auto max-w-305 flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+
         {/* Logo */}
-        <NavLink to="/" className="flex items-center gap-2 text-xl font-bold tracking-wide no-underline">
-          <img src="/logo.webp" alt="SKSSF Kolmanna" className="h-10 w-10 object-contain" />
-          <span className="text-indigo-600 dark:text-indigo-400">SKSSF</span>
-          <span className="text-slate-700 dark:text-slate-300">Kolmanna</span>
+        <NavLink
+          to="/"
+          className="flex items-center gap-2 text-xl font-bold tracking-wide no-underline"
+        >
+          <img
+            src="/logo.webp"
+            alt="SKSSF Kolmanna"
+            className="h-10 w-10 object-contain"
+          />
+
+          <span className="text-primary-600">SKSSF</span>
+          <span className="text-secondary-500">Kolmanna</span>
         </NavLink>
-
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 md:flex">
-          <button
-            onClick={toggleTheme}
-            className="text-slate-600 transition hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400"
-          >
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+        <nav className="hidden md:flex items-center gap-6">
+          <button onClick={toggleTheme} className="text-sm font-medium transition-colors no-underline text-neutral-300 hover:text-secondary-300">
+            {!isDark ? <Moon /> : <Sun />}
           </button>
-
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `text-sm font-medium transition-colors ${
-                  isActive
-                    ? "font-semibold text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400"
+                `text-sm font-medium transition-colors no-underline ${isActive
+                  ? "text-secondary-500 font-semibold"
+                  : "text-neutral-300 hover:text-secondary-300"
                 }`
               }
             >
               {item.name}
             </NavLink>
           ))}
-
           {isAuthenticated ? (
-            <button
-              onClick={logoutUser}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-500"
+            <button onClick={logoutUser} className="text-sm font-medium transition-colors no-underline bg-red-500 p-1 rounded-sm text-neutral-300 hover:text-secondary-900"
             >
-              <LogOut size={14} />
               Logout
             </button>
           ) : (
-            <button
-              onClick={() => navigate("/login")}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500"
-            >
-              <LogIn size={14} />
+            <button onClick={() => navigate("/login")} className="text-sm font-medium transition-colors no-underline bg-primary-600 p-1 rounded-sm text-last-50 hover:text-secondary-900">
               Login
             </button>
           )}
         </nav>
 
-        {/* Mobile Toggle */}
+        {/* Mobile Menu Button */}
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="rounded-lg p-2 text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 md:hidden"
+          aria-expanded={isOpen}
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          className="rounded-lg p-2 text-white transition hover:bg-neutral-800 md:hidden"
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Navigation Dropdown */}
       {isOpen && (
-        <nav className="border-t border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 md:hidden">
-          <div className="space-y-2 px-4 py-4">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={() => setIsOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all ${
-                    isActive
-                      ? "bg-indigo-600 text-white"
-                      : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                  }`
-                }
-              >
-                {item.icon && <item.icon className="mr-3 h-5 w-5" />}
-                <span>{item.name}</span>
-              </NavLink>
-            ))}
+        <nav className="md:hidden border-t border-neutral-800 bg-neutral-900 shadow-xl">
+          <div className="px-4 py-4 space-y-2">
 
-            <div className="my-3 border-t border-slate-200 dark:border-slate-800" />
+            {/* Navigation Links */}
+            <div className="space-y-1">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${isActive
+                      ? "bg-emerald-500 text-white shadow-md"
+                      : "text-neutral-300 hover:bg-neutral-800 hover:text-emerald-400"
+                    }`
+                  }
+                >
+                  {item.icon && <item.icon className="mr-3 h-5 w-5" />}
+                  <span>{item.name}</span>
+                </NavLink>
+              ))}
+            </div>
 
-            {/* Theme Toggle */}
+            {/* Divider */}
+            <div className="border-t border-neutral-800 my-3" />
+
+            {/* Theme Button */}
             <button
+              type="button"
+              role="switch"
+              aria-checked={isDark}
+              aria-label="Toggle theme"
               onClick={toggleTheme}
-              className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="group flex w-full items-center justify-between rounded-xl px-4 py-3 transition-colors duration-200 hover:bg-neutral-800/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
-              <span>{isDark ? "Dark Mode" : "Light Mode"}</span>
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              {/* Icon & Label */}
+              <div className="flex items-center gap-3">
+                <div className="relative flex h-5 w-5 items-center justify-center text-neutral-400 transition-colors group-hover:text-neutral-200">
+                  <Sun
+                    className={`absolute h-5 w-5 transition-all duration-300 ${isDark
+                      ? "rotate-90 scale-0 opacity-0"
+                      : "rotate-0 scale-100 opacity-100"
+                      }`}
+                  />
+                  <Moon
+                    className={`absolute h-5 w-5 transition-all duration-300 ${isDark
+                      ? "rotate-0 scale-100 opacity-100"
+                      : "-rotate-90 scale-0 opacity-0"
+                      }`}
+                  />
+                </div>
+
+                <span className="text-sm font-medium text-neutral-300 transition-colors group-hover:text-white">
+                  {isDark ? "Dark Mode" : "Light Mode"}
+                </span>
+              </div>
+
+              {/* Switch Track */}
+              <div
+                className={`relative h-6 w-11 rounded-full transition-colors duration-300 ease-in-out ${isDark ? "bg-emerald-500" : "bg-neutral-700"
+                  }`}
+              >
+                {/* Switch Thumb */}
+                <span
+                  className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-300 ease-in-out ${isDark ? "translate-x-5" : "translate-x-0"
+                    }`}
+                />
+              </div>
             </button>
 
-            {/* Auth Action */}
+            {/* Auth Button */}
             {isAuthenticated ? (
               <button
                 onClick={logoutUser}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 py-3 text-sm font-semibold text-white"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-red-600 active:scale-[0.98]"
               >
-                <LogOut size={18} />
+                <LogOut size={20} strokeWidth={2.5} />
                 <span>Logout</span>
               </button>
             ) : (
@@ -169,10 +216,9 @@ export default function Header() {
                   navigate("/login");
                   setIsOpen(false);
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white"
+                className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 active:scale-[0.98]"
               >
-                <LogIn size={18} />
-                <span>Login</span>
+                Login
               </button>
             )}
           </div>
