@@ -12,7 +12,6 @@ import {
   Plus,
   Folder,
   RotateCcw,
-  Calendar,
   Database,
   Wallet
 } from "lucide-react";
