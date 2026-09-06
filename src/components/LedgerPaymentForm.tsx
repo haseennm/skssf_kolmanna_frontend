@@ -10,14 +10,12 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useLedgerStore, type CreateLedgerPayload } from "../store/useLedgerStore";
 import { useNavigate } from "react-router-dom";
 import { checkPermission } from "../utils/checkPermission";
-// Defined locally to match your useLedgerStore interface
+
 export interface PaymentOverviewItem {
     payment_category_id: number;
     amount: number;
     note?: string;
 }
-
-
 
 const paymentItemSchema = z.object({
     payment_category_id: z
@@ -33,22 +31,11 @@ const paymentItemSchema = z.object({
 
 const schema = z.object({
     payment_flow: z.enum(["In", "Out"]),
-
     date: z.string().min(1, "Date is required"),
-
     note: z.string().optional(),
-
     program_id: z.number().nullable(),
-
-    discount: z.coerce
-        .number()
-        .min(0)
-        .default(0),
-
-    paid_amount: z.coerce
-        .number()
-        .min(0, "Paid amount cannot be negative"),
-
+    discount: z.coerce.number().min(0).default(0),
+    paid_amount: z.coerce.number().min(0, "Paid amount cannot be negative"),
     payment_overview: z
         .array(paymentItemSchema)
         .min(1, "Add at least one payment"),
@@ -72,60 +59,70 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
     const { categories, fetchCategories } = useLedgerCategory();
     const { programs, fetchPrograms } = useProgramStore();
     const { user } = useAuthStore();
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
-    // Removing <FormValues> here lets RHF + zodResolver automatically map input and output types
-    const {
-        control,
-        register,
-        handleSubmit,
-        watch,
-        setValue,
-        reset,
-        formState: { errors, isSubmitting },
-    } = useForm({
-        resolver: zodResolver(schema),
-        defaultValues: {
-            payment_flow: "In" as "In" | "Out",
-            date: new Date().toISOString().substring(0, 10),
-            note: "",
-            program_id: null as number | null,
-            discount: 0,
-            paid_amount: 0,
-            payment_overview: [
-                {
-                    payment_category_id: 0,
-                    amount: 0,
-                    note: "",
-                },
-            ],
-        },
-    });
+    // Helper function to find the "Other" category ID (case-insensitive match)
+    const defaultCategoryId = useMemo(() => {
+        const otherCategory = categories.find((cat) => /^other$/i.test(cat.name.trim()));
+        return otherCategory ? Number(otherCategory.id) : 0;
+    }, [categories]);
+
+ const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    getValues,
+    reset,
+    formState: { errors, isSubmitting },
+} = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+        payment_flow: "Out" as "In" | "Out", // Changed default from "In" to "Out"
+        date: new Date().toISOString().substring(0, 10),
+        note: "",
+        program_id: null as number | null,
+        discount: 0,
+        paid_amount: 0,
+        payment_overview: [ 
+            {
+                payment_category_id: 0,
+                amount: 0,
+                note: "",
+            },
+        ],
+    },
+});
 
     const { fields, append, remove } = useFieldArray({
         control,
         name: "payment_overview",
     });
+
     useEffect(() => {
-         if (!( checkPermission(user, ["ledger handle","all handle"], navigate))) return;
-     
+        if (!checkPermission(user, ["ledger handle", "all handle"], navigate)) return;
     }, [user, navigate]);
+
     useEffect(() => {
         if (!open) return;
 
-        fetchCategories({
-            page: 1,
-            limit: 1000,
-        });
-
-        fetchPrograms({
-            page: 1,
-            limit: 1000,
-        });
-
+        fetchCategories({ page: 1, limit: 1000 });
+        fetchPrograms({ page: 1, limit: 1000 });
         clearError();
     }, [open]);
 
+    // Update initial item's category to "Other" once categories are fetched
+    // Update initial item's category to "Other" once categories are fetched
+    useEffect(() => {
+        if (categories.length > 0 && defaultCategoryId > 0) {
+            // Use standard getValues() instead of control._getFieldArrayValue()
+            const currentItems = getValues("payment_overview");
+            if (currentItems && currentItems.length > 0 && currentItems[0].payment_category_id === 0) {
+                setValue("payment_overview.0.payment_category_id", defaultCategoryId);
+            }
+        }
+    }, [categories, defaultCategoryId, setValue, getValues]);
     const items = useWatch({
         control,
         name: "payment_overview",
@@ -161,7 +158,6 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
     const onSubmit = async (values: FormValues) => {
         if (!(await checkPermission(user, ["ledger handle", "all handle"], navigate))) return;
 
-
         const payload: CreateLedgerPayload = {
             program_id: values.program_id || null,
             payment_flow: values.payment_flow,
@@ -175,7 +171,7 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
             payment_overview: values.payment_overview.map((item) => ({
                 payment_category_id: item.payment_category_id,
                 amount: item.amount,
-                note: item.note ?? "", // Converts undefined -> "" to satisfy string type
+                note: item.note ?? "",
             })),
         };
 
@@ -183,8 +179,6 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
         if (ok) {
             handleClose();
         }
-
-
     };
 
     if (!open) return null;
@@ -195,12 +189,8 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-slate-200 px-8 py-6 dark:border-slate-700">
                     <div>
-                        <h2 className="text-2xl font-bold dark:text-white">
-                            New Ledger Payment
-                        </h2>
-                        <p className="mt-1 text-slate-500 dark:text-slate-400">
-                            Record a new income or expense.
-                        </p>
+                        <h2 className="text-2xl font-bold dark:text-white">New Ledger Payment</h2>
+                        <p className="mt-1 text-slate-500 dark:text-slate-400">Record a new income or expense.</p>
                     </div>
 
                     <button
@@ -212,10 +202,7 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                     </button>
                 </div>
 
-                <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="flex flex-1 flex-col overflow-hidden"
-                >
+                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col overflow-hidden">
                     {/* Body */}
                     <div className="flex-1 overflow-y-auto p-8">
                         {error && (
@@ -268,7 +255,6 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                                     <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                         Program
                                     </label>
-
                                     <select
                                         {...register("program_id", {
                                             setValueAs: (v) => (v === "" ? null : Number(v)),
@@ -285,28 +271,28 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                                 </div>
 
                                 {/* Selected Program Details Banner */}
-                                {selectedProgram && (() => {
-                                    const p = programs.find((x) => x.id === selectedProgram);
-                                    if (!p) return null;
+                                {selectedProgram &&
+                                    (() => {
+                                        const p = programs.find((x) => x.id === selectedProgram);
+                                        if (!p) return null;
 
-                                    return (
-                                        <div className="rounded-2xl border border-primary-200 bg-primary-50 p-5 dark:border-primary-800 dark:bg-primary-900/20">
-                                            <h3 className="font-semibold text-primary-700 dark:text-primary-300">
-                                                {p.title}
-                                            </h3>
-                                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                                                Wing : <span className="font-medium">{p.wing}</span>
-                                            </p>
-                                        </div>
-                                    );
-                                })()}
+                                        return (
+                                            <div className="rounded-2xl border border-primary-200 bg-primary-50 p-5 dark:border-primary-800 dark:bg-primary-900/20">
+                                                <h3 className="font-semibold text-primary-700 dark:text-primary-300">
+                                                    {p.title}
+                                                </h3>
+                                                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                                                    Wing : <span className="font-medium">{p.wing}</span>
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
 
                                 {/* Date */}
                                 <div>
                                     <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                         Date
                                     </label>
-
                                     <div className="relative">
                                         <Calendar className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                                         <input
@@ -315,25 +301,18 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                                             className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-12 pr-4 outline-none focus:border-primary-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                         />
                                     </div>
-                                    {errors.date && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.date.message}
-                                        </p>
-                                    )}
+                                    {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date.message}</p>}
                                 </div>
 
                                 {/* Payment Items Table */}
                                 <div className="rounded-2xl border border-slate-200 dark:border-slate-700">
                                     <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
-                                        <h3 className="font-semibold dark:text-white">
-                                            Payment Items
-                                        </h3>
-
+                                        <h3 className="font-semibold dark:text-white">Payment Items</h3>
                                         <button
                                             type="button"
                                             onClick={() =>
                                                 append({
-                                                    payment_category_id: 0,
+                                                    payment_category_id: defaultCategoryId,
                                                     amount: 0,
                                                     note: "",
                                                 })
@@ -364,16 +343,12 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
 
                                             <tbody>
                                                 {fields.map((field, index) => (
-                                                    <tr
-                                                        key={field.id}
-                                                        className="border-t border-slate-200 dark:border-slate-700"
-                                                    >
+                                                    <tr key={field.id} className="border-t border-slate-200 dark:border-slate-700">
                                                         <td className="p-3 align-top">
                                                             <select
-                                                                {...register(
-                                                                    `payment_overview.${index}.payment_category_id`,
-                                                                    { valueAsNumber: true }
-                                                                )}
+                                                                {...register(`payment_overview.${index}.payment_category_id`, {
+                                                                    valueAsNumber: true,
+                                                                })}
                                                                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                             >
                                                                 <option value={0}>Select</option>
@@ -385,10 +360,7 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                                                             </select>
                                                             {errors.payment_overview?.[index]?.payment_category_id && (
                                                                 <p className="mt-1 text-xs text-red-500">
-                                                                    {
-                                                                        errors.payment_overview[index]
-                                                                            ?.payment_category_id?.message
-                                                                    }
+                                                                    {errors.payment_overview[index]?.payment_category_id?.message}
                                                                 </p>
                                                             )}
                                                         </td>
@@ -397,18 +369,14 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                                                             <input
                                                                 type="number"
                                                                 min={0}
-                                                                {...register(
-                                                                    `payment_overview.${index}.amount`,
-                                                                    { valueAsNumber: true }
-                                                                )}
+                                                                {...register(`payment_overview.${index}.amount`, {
+                                                                    valueAsNumber: true,
+                                                                })}
                                                                 className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                             />
                                                             {errors.payment_overview?.[index]?.amount && (
                                                                 <p className="mt-1 text-xs text-red-500">
-                                                                    {
-                                                                        errors.payment_overview[index]?.amount
-                                                                            ?.message
-                                                                    }
+                                                                    {errors.payment_overview[index]?.amount?.message}
                                                                 </p>
                                                             )}
                                                         </td>
@@ -462,10 +430,7 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                                         </div>
 
                                         <div>
-                                            <h3 className="font-semibold dark:text-white">
-                                                Payment Summary
-                                            </h3>
-
+                                            <h3 className="font-semibold dark:text-white">Payment Summary</h3>
                                             <p className="text-sm text-slate-500 dark:text-slate-400">
                                                 Automatically calculated
                                             </p>
@@ -474,10 +439,7 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
 
                                     {/* Sub Total */}
                                     <div className="flex items-center justify-between py-2">
-                                        <span className="text-slate-600 dark:text-slate-300">
-                                            Sub Total
-                                        </span>
-
+                                        <span className="text-slate-600 dark:text-slate-300">Sub Total</span>
                                         <span className="font-semibold dark:text-white">
                                             ₹{subtotal.toLocaleString()}
                                         </span>
@@ -492,9 +454,7 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                                         <input
                                             type="number"
                                             min={0}
-                                            {...register("discount", {
-                                                valueAsNumber: true,
-                                            })}
+                                            {...register("discount", { valueAsNumber: true })}
                                             className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-primary-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                         />
                                     </div>
@@ -529,9 +489,7 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
                                         className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-primary-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                     />
                                     {errors.paid_amount && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.paid_amount.message}
-                                        </p>
+                                        <p className="mt-1 text-xs text-red-500">{errors.paid_amount.message}</p>
                                     )}
 
                                     {paidEdited && (

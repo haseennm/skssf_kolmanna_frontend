@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useLedgerStore, type Ledger } from '../store/useLedgerStore';
 import LedgerDetails from './LedgerDetails';
 import {
@@ -21,6 +21,15 @@ import LedgerPaymentForm from './LedgerPaymentForm';
 import { useAuthStore } from '../store/useAuthStore';
 import Swal from 'sweetalert2';
 
+interface MonthlySummary {
+  monthKey: string;
+  monthLabel: string;
+  income: number;
+  expense: number;
+  difference: number;
+  items: Ledger[];
+}
+
 export const LedgerList: React.FC = () => {
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [selectedLedger, setSelectedLedger] = useState<Ledger | null>(null);
@@ -29,9 +38,12 @@ export const LedgerList: React.FC = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [formOpen, setFormOpen] = useState(false);
-  const { user } = useAuthStore()
+  const { user } = useAuthStore();
   const menuRef = useRef<HTMLDivElement | null>(null);
+  // State for controlling sort direction
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
+  // Group transactions by month and perform separate calculations per group
 
   const {
     ledgers,
@@ -43,9 +55,10 @@ export const LedgerList: React.FC = () => {
     clearError,
     active_year_total
   } = useLedgerStore();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
   useEffect(() => {
-    fetchLedgers({ page: 1, limit: 10, active_year_id: user?.active_year_id });
+    fetchLedgers({ page: 1, limit: 50, active_year_id: user?.active_year_id });
   }, []);
 
   // Close dropdown on click outside
@@ -58,24 +71,20 @@ export const LedgerList: React.FC = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-
     return `${year}-${month}-${day}`;
   };
 
   useEffect(() => {
     const today = new Date();
-    setStartDate(
-      formatDate(new Date(today.getFullYear(), today.getMonth(), 1))
-    );
-
-    setEndDate(
-      formatDate(new Date(today.getFullYear(), today.getMonth() + 1, 0))
-    );
+    setStartDate(formatDate(new Date(today.getFullYear(), today.getMonth(), 1)));
+    setEndDate(formatDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)));
   }, []);
+
   const handleDelete = async (r_id: number) => {
     if (user) {
       if (window.confirm('Are you sure you want to delete this ledger transaction?')) {
@@ -91,7 +100,7 @@ export const LedgerList: React.FC = () => {
         text: "You need to log in to access this page.",
         icon: "warning",
         confirmButtonText: "Go to Login",
-        confirmButtonColor: "#2563eb", // Optional
+        confirmButtonColor: "#2563eb",
         showCancelButton: false,
         cancelButtonText: "Cancel",
       }).then((result) => {
@@ -102,7 +111,7 @@ export const LedgerList: React.FC = () => {
     }
   };
 
-   const handleSearch = () => {
+  const handleSearch = () => {
     fetchLedgers({
       page: 1,
       limit: 10,
@@ -139,7 +148,7 @@ export const LedgerList: React.FC = () => {
     });
   };
 
-  // Quick metrics calculations
+  // Metrics for current loaded list
   const totalIncome = ledgers
     .filter((i) => i.payment_flow === "In")
     .reduce((sum, item) => sum + Number(item.total_amount), 0);
@@ -148,6 +157,90 @@ export const LedgerList: React.FC = () => {
     .filter((i) => i.payment_flow === "Out")
     .reduce((sum, item) => sum + Number(item.total_amount), 0);
 
+  // Group transactions by month when multiple months are detected
+  // const monthlyGroups = useMemo(() => {
+  //   const groups: { [key: string]: MonthlySummary } = {};
+
+  //   ledgers.forEach((item) => {
+  //     const date = new Date(item.date);
+  //     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  //     const monthLabel = date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  //     if (!groups[monthKey]) {
+  //       groups[monthKey] = {
+  //         monthKey,
+  //         monthLabel,
+  //         income: 0,
+  //         expense: 0,
+  //         difference: 0,
+  //         items: [],
+  //       };
+  //     }
+
+  //     const amt = Number(item.total_amount) || 0;
+  //     if (item.payment_flow === "In") {
+  //       groups[monthKey].income += amt;
+  //     } else {
+  //       groups[monthKey].expense += amt;
+  //     }
+
+  //     groups[monthKey].difference = groups[monthKey].income - groups[monthKey].expense;
+  //     groups[monthKey].items.push(item);
+  //   });
+
+  //   return Object.values(groups);
+  // }, [ledgers]);
+
+  // // Flag to check if date range covers more than 1 month
+  // const isMultiMonth = useMemo(() => {
+  //   if (!startDate || !endDate) return false;
+  //   const start = new Date(startDate);
+  //   const end = new Date(endDate);
+  //   return (
+  //     start.getFullYear() !== end.getFullYear() ||
+  //     start.getMonth() !== end.getMonth()
+  //   );
+  // }, [startDate, endDate]);
+
+  const sortedMonthlyGroups = useMemo(() => {
+    // 1. Sort base items by date first
+    const sortedLedgers = [...ledgers].sort((a, b) => {
+      const timeA = new Date(a.date).getTime();
+      const timeB = new Date(b.date).getTime();
+      return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+    });
+
+    const groups: { [key: string]: MonthlySummary } = {};
+
+    sortedLedgers.forEach((item) => {
+      const date = new Date(item.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthLabel = date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+      if (!groups[monthKey]) {
+        groups[monthKey] = {
+          monthKey,
+          monthLabel,
+          income: 0,
+          expense: 0,
+          difference: 0,
+          items: [],
+        };
+      }
+
+      const amt = Number(item.total_amount) || 0;
+      if (item.payment_flow === "In") {
+        groups[monthKey].income += amt;
+      } else {
+        groups[monthKey].expense += amt;
+      }
+
+      groups[monthKey].difference = groups[monthKey].income - groups[monthKey].expense;
+      groups[monthKey].items.push(item);
+    });
+
+    return Object.values(groups);
+  }, [ledgers, sortOrder]);
   return (
     <div className="min-h-screen bg-slate-50 p-4 transition-colors dark:bg-slate-950 sm:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -171,9 +264,10 @@ export const LedgerList: React.FC = () => {
               </button>
             </NavLink>
 
-            <button onClick={() => {
-              setFormOpen(true);
-            }} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:shadow-indigo-500/20 active:scale-95">
+            <button
+              onClick={() => setFormOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:shadow-indigo-500/20 active:scale-95"
+            >
               <Plus size={18} />
               Add Transaction
             </button>
@@ -203,12 +297,10 @@ export const LedgerList: React.FC = () => {
                     <p className="text-sm uppercase tracking-widest text-emerald-500">
                       Total Income
                     </p>
-
                     <h2 className="mt-3 text-4xl font-bold">
                       ₹{Number(active_year_total?.income || 0).toLocaleString()}
                     </h2>
                   </div>
-
                   <div className="rounded-2xl bg-white/20 p-4 backdrop-blur">
                     <TrendingUp size={32} />
                   </div>
@@ -222,12 +314,10 @@ export const LedgerList: React.FC = () => {
                     <p className="text-sm uppercase tracking-widest text-rose-500">
                       Total Expenses
                     </p>
-
                     <h2 className="mt-3 text-4xl font-bold">
                       ₹{Number(active_year_total?.expense || 0).toLocaleString()}
                     </h2>
                   </div>
-
                   <div className="rounded-2xl bg-white/20 p-4 backdrop-blur">
                     <TrendingDown size={32} />
                   </div>
@@ -241,16 +331,13 @@ export const LedgerList: React.FC = () => {
                     <p className="text-sm uppercase tracking-widest text-indigo-500">
                       Net Balance
                     </p>
-
                     <h2 className="mt-3 text-4xl font-bold">
-                      ₹
-                      {(
+                      ₹{(
                         Number(active_year_total?.income || 0) -
                         Number(active_year_total?.expense || 0)
                       ).toLocaleString()}
                     </h2>
                   </div>
-
                   <div className="rounded-2xl bg-white/20 p-4 backdrop-blur">
                     <Wallet size={32} />
                   </div>
@@ -274,7 +361,6 @@ export const LedgerList: React.FC = () => {
                       ₹{totalIncome.toLocaleString()}
                     </h3>
                   </div>
-
                   <div className="rounded-full bg-emerald-100 p-4 text-emerald-600 dark:bg-emerald-900">
                     <TrendingUp />
                   </div>
@@ -289,7 +375,6 @@ export const LedgerList: React.FC = () => {
                       ₹{totalExpense.toLocaleString()}
                     </h3>
                   </div>
-
                   <div className="rounded-full bg-rose-100 p-4 text-rose-600 dark:bg-rose-900">
                     <TrendingDown />
                   </div>
@@ -304,7 +389,6 @@ export const LedgerList: React.FC = () => {
                       {pagination?.total || ledgers.length}
                     </h3>
                   </div>
-
                   <div className="rounded-full bg-indigo-100 p-4 text-indigo-600 dark:bg-indigo-900">
                     <Database />
                   </div>
@@ -373,14 +457,12 @@ export const LedgerList: React.FC = () => {
               <label className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300">
                 From Date
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                />
-              </div>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              />
             </div>
 
             {/* End Date */}
@@ -421,7 +503,6 @@ export const LedgerList: React.FC = () => {
         {/* Main Data Table */}
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           {isLoading ? (
-            /* Loading Skeleton Rows */
             <div className="divide-y divide-slate-100 p-6 dark:divide-slate-800">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="flex animate-pulse items-center justify-between py-4">
@@ -437,10 +518,18 @@ export const LedgerList: React.FC = () => {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-                  <thead className="border-b border-slate-200/80 bg-slate-50/80 uppercase tracking-wider text-xs font-semibold text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                  <thead className="border-b border-slate-200/80 bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
                     <tr>
                       <th className="px-6 py-4">Reference</th>
-                      <th className="px-6 py-4">Date</th>
+                      <th
+                        className="cursor-pointer px-6 py-4 transition hover:text-indigo-600"
+                        onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Date
+                          <span>{sortOrder === 'desc' ? '↓' : '↑'}</span>
+                        </div>
+                      </th>
                       <th className="px-6 py-4">Flow</th>
                       <th className="px-6 py-4">Amount</th>
                       <th className="px-6 py-4">Categories</th>
@@ -450,139 +539,121 @@ export const LedgerList: React.FC = () => {
                   </thead>
 
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {ledgers.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500">
-                          <div className="flex flex-col items-center justify-center gap-2">
-                            <Search size={32} className="stroke-1 text-slate-300 dark:text-slate-600" />
-                            <p className="font-medium">No transactions found.</p>
-                            <p className="text-xs text-slate-400">Try adjusting your filters or search terms.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      ledgers.map((item) => {
-                        const isIncome = item.payment_flow === "In";
+                    {sortedMonthlyGroups.map((group) => {
+                      const isNetPositive = group.difference >= 0;
 
-                        return (
-                          <tr
-                            key={item.id}
-                            className="transition hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
-                          >
-                            {/* Reference */}
-                            <td className="px-6 py-4 font-semibold text-slate-900 dark:text-slate-100">
-                              {item.reference_number}
+                      return (
+                        <React.Fragment key={group.monthKey}>
+                          {/* Monthly Breakdown Banner */}
+                          <tr className="bg-slate-100/90 font-medium dark:bg-slate-800/80">
+                            <td colSpan={7} className="px-6 py-3">
+                              <div className="flex flex-wrap items-center justify-between gap-4 text-xs sm:text-sm">
+                                <span className="text-base font-bold text-slate-900 dark:text-slate-100">
+                                  {group.monthLabel}
+                                </span>
+
+                                <div className="flex items-center gap-4">
+                                  {/* Monthly Income */}
+                                  <span className="text-emerald-600 dark:text-emerald-400">
+                                    Income: <strong className="font-semibold">₹{group.income.toLocaleString()}</strong>
+                                  </span>
+
+                                  {/* Monthly Expense */}
+                                  <span className="text-rose-600 dark:text-rose-400">
+                                    Expense: <strong className="font-semibold">₹{group.expense.toLocaleString()}</strong>
+                                  </span>
+
+                                  {/* Net Amount */}
+                                  <span
+                                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${isNetPositive
+                                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                      : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                                      }`}
+                                  >
+                                    Net Amount: {isNetPositive ? "+" : "-"}₹{Math.abs(group.difference).toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
                             </td>
+                          </tr>
 
-                            {/* Date */}
-                            <td className="px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400">
-                              <div className="inline-flex items-center gap-1.5">
-                                <Calendar size={14} className="text-slate-400" />
+                          {/* Group Items */}
+                          {group.items.map((item) => (
+                            <tr key={item.id} className="transition hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                              <td className="px-6 py-4 font-semibold text-slate-900 dark:text-slate-100">
+                                {item.reference_number}
+                              </td>
+                              <td className="whitespace-nowrap px-6 py-4 text-slate-500 dark:text-slate-400">
                                 {new Date(item.date).toLocaleDateString("en-GB", {
                                   day: "2-digit",
                                   month: "short",
                                   year: "numeric",
                                 })}
-                              </div>
-                            </td>
-
-                            {/* Flow Badge */}
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${isIncome
-                                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
-                                  : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400"
-                                  }`}
-                              >
-                                {isIncome ? "Income" : "Expense"}
-                              </span>
-                            </td>
-
-                            {/* Amount */}
-                            <td className="px-6 py-4 whitespace-nowrap font-bold">
-                              <span
-                                className={
-                                  isIncome
-                                    ? "text-emerald-600 dark:text-emerald-400"
-                                    : "text-rose-600 dark:text-rose-400"
-                                }
-                              >
-                                {isIncome ? "+" : "-"} ₹{Number(item.total_amount).toLocaleString()}
-                              </span>
-                            </td>
-
-                            {/* Categories */}
-                            <td className="px-6 py-4">
-                              <div className="flex flex-wrap gap-1.5">
-                                {item.payment_overview.map((payment) => (
-                                  <span
-                                    key={payment.payment_category_id}
-                                    className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                              </td>
+                              <td className="whitespace-nowrap px-6 py-4">
+                                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${item.payment_flow === "In"
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-rose-50 text-rose-700"
+                                  }`}>
+                                  {item.payment_flow === "In" ? "Income" : "Expense"}
+                                </span>
+                              </td>
+                              <td className="whitespace-nowrap px-6 py-4 font-bold">
+                                ₹{Number(item.total_amount).toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4">
+                                {item.payment_overview.map(p => p.payment_category_name).join(', ')}
+                              </td>
+                              <td className="px-6 py-4 text-xs">{item.note || "—"}</td>
+                              <td className="px-6 py-4 text-right whitespace-nowrap">
+                                <div className="relative inline-block text-left" ref={openMenu === item.id ? menuRef : null}>
+                                  <button
+                                    onClick={() => setOpenMenu(openMenu === item.id ? null : item.id)}
+                                    className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                   >
-                                    {payment.payment_category_name}
-                                  </span>
-                                ))}
-                              </div>
-                            </td>
+                                    <EllipsisVertical size={18} />
+                                  </button>
 
-                            {/* Note */}
-                            <td className="max-w-xs truncate px-6 py-4 text-xs text-slate-500 dark:text-slate-400">
-                              {item.note || "—"}
-                            </td>
+                                  {openMenu === item.id && (
+                                    <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                                      <button
+                                        onClick={() => {
+                                          setSelectedLedger(item);
+                                          setOpenMenu(null);
+                                        }}
+                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+                                      >
+                                        <Eye size={14} className="text-indigo-500" />
+                                        View Details
+                                      </button>
 
-                            {/* Action Menu */}
-                            <td className="px-6 py-4 text-right whitespace-nowrap">
-                              <div className="relative inline-block text-left" ref={openMenu === item.id ? menuRef : null}>
-                                <button
-                                  onClick={() => setOpenMenu(openMenu === item.id ? null : item.id)}
-                                  className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                >
-                                  <EllipsisVertical size={18} />
-                                </button>
+                                      <button
+                                        onClick={() => setOpenMenu(null)}
+                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+                                      >
+                                        <Pencil size={14} className="text-amber-500" />
+                                        Edit
+                                      </button>
 
-                                {openMenu === item.id && (
-                                  <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
-                                    <button
-                                      onClick={() => {
-                                        setSelectedLedger(item);
-                                        setOpenMenu(null);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                                    >
-                                      <Eye size={14} className="text-indigo-500" />
-                                      View Details
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        setOpenMenu(null);
-                                        // Edit logic
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                                    >
-                                      <Pencil size={14} className="text-amber-500" />
-                                      Edit
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        handleDelete(item.id);
-                                        setOpenMenu(null);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50"
-                                    >
-                                      <Trash2 size={14} />
-                                      Delete
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-
-                          </tr>
-                        );
-                      })
-                    )}
+                                      <button
+                                        onClick={() => {
+                                          handleDelete(item.id);
+                                          setOpenMenu(null);
+                                        }}
+                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50"
+                                      >
+                                        <Trash2 size={14} />
+                                        Delete
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -630,13 +701,11 @@ export const LedgerList: React.FC = () => {
         </div>
 
       </div>
+
       <LedgerPaymentForm
         open={formOpen}
-        onClose={() => {
-          setFormOpen(false)
-        }}
+        onClose={() => setFormOpen(false)}
       />
     </div>
-
   );
 };
