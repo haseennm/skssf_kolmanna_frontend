@@ -12,8 +12,8 @@ import {
   Plus,
   Folder,
   RotateCcw,
-  Database,
-  Wallet
+  Wallet,
+  Coins
 } from "lucide-react";
 import { NavLink, useNavigate } from 'react-router-dom';
 import LedgerPaymentForm from './LedgerPaymentForm';
@@ -52,13 +52,36 @@ export const LedgerList: React.FC = () => {
     fetchLedgers,
     deleteLedger,
     clearError,
-    active_year_total
+    active_year_total,
+    page_summary
   } = useLedgerStore();
   const navigate = useNavigate();
 
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const today = new Date();
+  const start = formatDate(new Date(today.getFullYear(), today.getMonth(), 1));
+  const end = formatDate(new Date(today.getFullYear(), today.getMonth() + 1, 0));
   useEffect(() => {
-    fetchLedgers({ page: 1, limit: 50, active_year_id: user?.active_year_id });
-  }, []);
+
+    // Set the state for UI display
+    setStartDate(start);
+    setEndDate(end);
+
+    // Use local variables directly for the API call
+    fetchLedgers({
+      page: 1,
+      limit: 45,
+      active_year_id: user?.active_year_id,
+      start_date: start,
+      end_date: end,
+    });
+  }, [user?.active_year_id]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -71,18 +94,9 @@ export const LedgerList: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
 
-  useEffect(() => {
-    const today = new Date();
-    setStartDate(formatDate(new Date(today.getFullYear(), today.getMonth(), 1)));
-    setEndDate(formatDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)));
-  }, []);
+
+
 
   const handleDelete = async (r_id: number) => {
     if (user) {
@@ -125,20 +139,20 @@ export const LedgerList: React.FC = () => {
   const handleReset = () => {
     setSearchTerm("");
     setPaymentFlow("");
-    setStartDate("");
-    setEndDate("");
 
     fetchLedgers({
       page: 1,
-      limit: 10,
+      limit: 45,
       active_year_id: user?.active_year_id,
+      start_date: start,
+      end_date: end,
     });
   };
 
   const handlePageChange = (newPage: number) => {
     fetchLedgers({
       page: newPage,
-      limit: pagination?.limit || 10,
+      limit: pagination?.limit || 50,
       active_year_id: user?.active_year_id,
       search: searchTerm || undefined,
       payment_flow: paymentFlow || undefined,
@@ -147,14 +161,6 @@ export const LedgerList: React.FC = () => {
     });
   };
 
-  // Metrics for current loaded list
-  const totalIncome = ledgers
-    .filter((i) => i.payment_flow === "In")
-    .reduce((sum, item) => sum + Number(item.total_amount), 0);
-
-  const totalExpense = ledgers
-    .filter((i) => i.payment_flow === "Out")
-    .reduce((sum, item) => sum + Number(item.total_amount), 0);
 
   // Group transactions by month when multiple months are detected
   // const monthlyGroups = useMemo(() => {
@@ -357,7 +363,7 @@ export const LedgerList: React.FC = () => {
                   <div>
                     <p className="text-sm text-slate-500">Page Income</p>
                     <h3 className="mt-2 text-3xl font-bold text-emerald-600">
-                      ₹{totalIncome.toLocaleString()}
+                      ₹{page_summary?.income}
                     </h3>
                   </div>
                   <div className="rounded-full bg-emerald-100 p-4 text-emerald-600 dark:bg-emerald-900">
@@ -371,7 +377,7 @@ export const LedgerList: React.FC = () => {
                   <div>
                     <p className="text-sm text-slate-500">Page Expenses</p>
                     <h3 className="mt-2 text-3xl font-bold text-rose-600">
-                      ₹{totalExpense.toLocaleString()}
+                      ₹{page_summary?.expense}
                     </h3>
                   </div>
                   <div className="rounded-full bg-rose-100 p-4 text-rose-600 dark:bg-rose-900">
@@ -383,13 +389,16 @@ export const LedgerList: React.FC = () => {
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-500">Total Records</p>
+                    <p className="text-sm text-slate-500">Net Amount</p>
                     <h3 className="mt-2 text-3xl font-bold text-slate-800 dark:text-white">
-                      {pagination?.total || ledgers.length}
+                      ₹{(
+                        Number(page_summary?.income || 0) -
+                        Number(page_summary?.expense || 0)
+                      ).toLocaleString()}
                     </h3>
                   </div>
                   <div className="rounded-full bg-indigo-100 p-4 text-indigo-600 dark:bg-indigo-900">
-                    <Database />
+                    <Coins />
                   </div>
                 </div>
               </div>
@@ -422,7 +431,7 @@ export const LedgerList: React.FC = () => {
               <div className="relative">
                 <Search
                   size={16}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
                 />
                 <input
                   type="text"
@@ -430,7 +439,7 @@ export const LedgerList: React.FC = () => {
                   value={searchTerm}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-indigo-400"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-indigo-500 dark:focus:bg-slate-800 dark:focus:ring-indigo-500/30"
                 />
               </div>
             </div>
@@ -443,11 +452,11 @@ export const LedgerList: React.FC = () => {
               <select
                 value={paymentFlow}
                 onChange={(e) => setPaymentFlow(e.target.value as "" | "In" | "Out")}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-indigo-500 dark:focus:bg-slate-800 dark:focus:ring-indigo-500/30"
               >
-                <option value="">All Flows</option>
-                <option value="In">Income</option>
-                <option value="Out">Expense</option>
+                <option value="" className="dark:bg-slate-800">All Flows</option>
+                <option value="In" className="dark:bg-slate-800">Income</option>
+                <option value="Out" className="dark:bg-slate-800">Expense</option>
               </select>
             </div>
 
@@ -460,7 +469,7 @@ export const LedgerList: React.FC = () => {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100 dark:scheme-dark dark:focus:border-indigo-500 dark:focus:bg-slate-800 dark:focus:ring-indigo-500/30"
               />
             </div>
 
@@ -473,7 +482,7 @@ export const LedgerList: React.FC = () => {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100 dark:scheme-dark dark:focus:border-indigo-500 dark:focus:bg-slate-800 dark:focus:ring-indigo-500/30"
               />
             </div>
 
