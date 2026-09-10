@@ -82,7 +82,7 @@ export const useItemStore = create<ItemState>((set) => ({
     try {
       const response = await axios.post(getStockItemUrl, {
         page: filters.page ?? 1,
-        limit: filters.limit ?? 10,
+        limit: filters.limit ?? 100,
         ...filters,
       });
 

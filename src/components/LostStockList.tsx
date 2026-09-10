@@ -28,7 +28,7 @@ export const LostStockList: React.FC = () => {
     const { user } = useAuthStore()
 
     useEffect(() => {
-        fetchLostStocks({ page: 1, limit: 10, active_year_id: user?.active_year_id });
+        fetchLostStocks({ page: 1, limit: 50, active_year_id: user?.active_year_id });
         fetchStocks({ page: 1, limit: 100, active_year_id: user?.active_year_id });
     }, []);
 

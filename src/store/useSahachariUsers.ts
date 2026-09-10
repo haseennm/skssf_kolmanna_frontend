@@ -78,7 +78,7 @@ export const useSahachariUsers = create<SahachariUserState>((set) => ({
     try {
       const response = await axios.post(getSahachariUsersUrl, {
         page: filters.page ?? 1,
-        limit: filters.limit ?? 10,
+        limit: filters.limit ?? 100,
         ...filters,
       });
 

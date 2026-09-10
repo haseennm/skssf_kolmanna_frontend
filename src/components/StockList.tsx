@@ -64,7 +64,7 @@ export const StockList: React.FC = () => {
   const handleReset = () => {
     setSearchTerm("");
     if (user) {
-      fetchStocks({ page: 1, limit: 10, active_year_id: user.active_year_id });
+      fetchStocks({ page: 1, limit: 100, active_year_id: user.active_year_id });
     }
   };
 

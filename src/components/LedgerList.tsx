@@ -76,7 +76,7 @@ export const LedgerList: React.FC = () => {
     // Use local variables directly for the API call
     fetchLedgers({
       page: 1,
-      limit: 45,
+      limit: 50,
       active_year_id: user?.active_year_id,
       start_date: start,
       end_date: end,
@@ -127,7 +127,7 @@ export const LedgerList: React.FC = () => {
   const handleSearch = () => {
     fetchLedgers({
       page: 1,
-      limit: 10,
+      limit: 50,
       active_year_id: user?.active_year_id,
       search: searchTerm || undefined,
       payment_flow: paymentFlow || undefined,
@@ -142,7 +142,7 @@ export const LedgerList: React.FC = () => {
 
     fetchLedgers({
       page: 1,
-      limit: 45,
+      limit: 50,
       active_year_id: user?.active_year_id,
       start_date: start,
       end_date: end,

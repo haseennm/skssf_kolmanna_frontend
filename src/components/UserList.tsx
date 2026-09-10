@@ -45,7 +45,7 @@ export const UserList: React.FC = () => {
 
   // Initial Data Fetch
   useEffect(() => {
-    fetchUsers({ page: 1, limit: 10, active_year_id: user?.active_year_id, action_by: user?.id || 0 });
+    fetchUsers({ page: 1, limit: 1000, active_year_id: user?.active_year_id, action_by: user?.id || 0 });
   }, []);
 
   // Close Dropdown Menu on Outside Click
@@ -63,7 +63,7 @@ export const UserList: React.FC = () => {
   const handleSearch = () => {
     fetchUsers({
       page: 1,
-      limit: 10,
+      limit: 100,
       active_year_id: user?.active_year_id,
       search: searchTerm || undefined,
       action_by: user!.id || 0
@@ -74,7 +74,7 @@ export const UserList: React.FC = () => {
     setSearchTerm("");
     fetchUsers({
       page: 1,
-      limit: 10,
+      limit: 100,
       active_year_id: user?.active_year_id,
       action_by: user!.id || 0
     });
@@ -83,7 +83,7 @@ export const UserList: React.FC = () => {
   const handlePageChange = (newPage: number) => {
     fetchUsers({
       page: newPage,
-      limit: pagination?.limit || 10,
+      limit: pagination?.limit || 100,
       active_year_id: user?.active_year_id,
       search: searchTerm || undefined,
       action_by: user!.id || 0

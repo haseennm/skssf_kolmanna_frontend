@@ -156,7 +156,7 @@ export const useLedgerStore = create<LedgerState>((set) => ({
         try {
             const response = await axios.post(getLedgerPaymentUrl, {
                 page: filters.page ?? 1,
-                limit: filters.limit ?? 10,
+                limit: filters.limit ?? 100,
                 ...filters,
             });
 

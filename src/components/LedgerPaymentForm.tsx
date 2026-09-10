@@ -107,8 +107,8 @@ export default function LedgerPaymentForm({ open, onClose }: Props) {
     useEffect(() => {
         if (!open) return;
 
-        fetchCategories({ page: 1, limit: 1000 });
-        fetchPrograms({ page: 1, limit: 1000 });
+        fetchCategories({ page: 1, limit: 100 });
+        fetchPrograms({ page: 1, limit: 1000 ,  active_year_id:user!.active_year_id });
         clearError();
     }, [open]);
 

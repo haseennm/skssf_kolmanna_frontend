@@ -42,7 +42,7 @@ export const ProgramList: React.FC = () => {
 
   // Initial Fetch
   useEffect(() => {
-    fetchPrograms({ page: 1, limit: 10, active_year_id: user?.active_year_id });
+    fetchPrograms({ page: 1, limit: 100, active_year_id: user?.active_year_id });
   }, []);
 
   // Close Action Dropdown on click outside
@@ -60,7 +60,7 @@ export const ProgramList: React.FC = () => {
   const handleSearch = () => {
     fetchPrograms({
       page: 1,
-      limit: 10,
+      limit: 50,
       active_year_id: user?.active_year_id,
       search: searchTerm || undefined,
     });
@@ -70,7 +70,7 @@ export const ProgramList: React.FC = () => {
     setSearchTerm("");
     fetchPrograms({
       page: 1,
-      limit: 10,
+      limit: 50,
       active_year_id: user?.active_year_id,
     });
   };
@@ -78,7 +78,7 @@ export const ProgramList: React.FC = () => {
   const handlePageChange = (newPage: number) => {
     fetchPrograms({
       page: newPage,
-      limit: pagination?.limit || 10,
+      limit: pagination?.limit || 50,
       active_year_id: user?.active_year_id,
       search: searchTerm || undefined,
     });

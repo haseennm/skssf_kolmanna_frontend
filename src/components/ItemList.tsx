@@ -25,7 +25,7 @@ export const ItemList: React.FC = () => {
 
 
   useEffect(() => {
-    fetchItems({ page: 1, limit: 10, active_year_id: user?.active_year_id });
+    fetchItems({ page: 1, limit: 50, active_year_id: user?.active_year_id });
   }, []);
 
   // const handleSearch = () => {

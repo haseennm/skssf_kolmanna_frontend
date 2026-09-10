@@ -84,7 +84,7 @@ export const useStockStore = create<StockState>((set) => ({
         try {
             const response = await axios.post(getStockUrl, {
                 page: filters.page ?? 1,
-                limit: filters.limit ?? 10,
+                limit: filters.limit ?? 100,
                 ...filters,
             });
 

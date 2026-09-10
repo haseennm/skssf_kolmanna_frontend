@@ -32,14 +32,14 @@ export default function PaymentCategoryList() {
     useEffect(() => {
         fetchCategories({
             page: 1,
-            limit: 10,
+            limit: 30,
         });
     }, []);
 
     const handleSearch = () => {
         fetchCategories({
             page: 1,
-            limit: 10,
+            limit: 30,
             search,
         });
     };
@@ -261,7 +261,7 @@ export default function PaymentCategoryList() {
                                     onClick={() =>
                                         fetchCategories({
                                             page: (pagination?.page ?? 1) - 1,
-                                            limit: pagination?.limit ?? 10,
+                                            limit: pagination?.limit ?? 30,
                                             search,
                                         })
                                     }
@@ -281,7 +281,7 @@ export default function PaymentCategoryList() {
                                     onClick={() =>
                                         fetchCategories({
                                             page: (pagination?.page ?? 1) + 1,
-                                            limit: pagination?.limit ?? 10,
+                                            limit: pagination?.limit ?? 30,
                                             search,
                                         })
                                     }
@@ -304,7 +304,7 @@ export default function PaymentCategoryList() {
                     setSelectedCategory(null);
                     fetchCategories({
                         page: pagination?.page ?? 1,
-                        limit: pagination?.limit ?? 10,
+                        limit: pagination?.limit ?? 30,
                         search,
                     });
                 }}

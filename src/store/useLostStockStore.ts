@@ -84,7 +84,7 @@ export const useLostStockStore = create<LostStockState>((set) => ({
     try {
       const response = await axios.post(getLowStockUrl, {
         page: filters.page ?? 1,
-        limit: filters.limit ?? 10,
+        limit: filters.limit ?? 100,
         ...filters,
       });
       const { lost_stocks, pagination } = response.data;

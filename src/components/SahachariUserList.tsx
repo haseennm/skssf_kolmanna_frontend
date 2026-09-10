@@ -31,7 +31,7 @@ export const SahachariUserList: React.FC = () => {
 
   useEffect(() => {
     if (!checkPermission(user, ["sahachari handle", "all handle"], navigate)) return;
-    fetchUsers({ page: 1, limit: 10 });
+    fetchUsers({ page: 1, limit: 100 });
   }, [user, navigate]);
 
   // Client-side instant filter: Updates as you type without backend API requests
@@ -48,12 +48,12 @@ export const SahachariUserList: React.FC = () => {
 
   // Backend query: Called only when Search button is clicked or Enter key pressed
   const handleSearch = () => {
-    fetchUsers({ page: 1, limit: 10, search: searchTerm || undefined });
+    fetchUsers({ page: 1, limit: 100, search: searchTerm || undefined });
   };
 
   const handleReset = () => {
     setSearchTerm("");
-    fetchUsers({ page: 1, limit: 10 });
+    fetchUsers({ page: 1, limit: 100 });
   };
 
   const handleDelete = async (r_id: number) => {

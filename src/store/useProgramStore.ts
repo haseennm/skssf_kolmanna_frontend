@@ -84,7 +84,7 @@ export const useProgramStore = create<ProgramState>((set) => ({
     try {
       const response = await axios.post(getProgramUrl, {
         page: filters.page ?? 1,
-        limit: filters.limit ?? 10,
+        limit: filters.limit ?? 100,
         ...filters,
       });
 
